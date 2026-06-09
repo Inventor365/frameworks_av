@@ -18,6 +18,7 @@
 #pragma once
 
 // Classes and interfaces directly used.
+#include "AppVolumeHelper.h"
 #include "Client.h"
 #include "DeviceEffectManager.h"
 #include "EffectConfiguration.h"
@@ -35,7 +36,6 @@
 #include <audio_utils/SimpleLog.h>
 #include <audio_utils/TimerQueue.h>
 #include <com/android/media/permission/PermissionEnum.h>
-#include <media/AppVolume.h>
 #include <media/IAudioFlinger.h>
 #include <media/IAudioPolicyServiceLocal.h>
 #include <media/MediaMetricsItem.h>
@@ -443,14 +443,13 @@ private:
     }
 
 public:
-    status_t    setAppVolume(const String8& packageName, const float value);
-    status_t    setAppMute(const String8& packageName, const bool value);
-    status_t    listAppVolumes(std::vector<media::AppVolume> *vols);
+    status_t setAppVolume(const String8& packageName, const float value);
+    status_t setAppMute(const String8& packageName, const bool value);
+    status_t listAppVolumes(std::vector<media::AppVolume> *vols);
 
 private:
-    std::map<String8, media::AppVolume>  mAppVolumeConfigs;
+    audioflinger::AppVolumeHelper mAppVolumeHelper;
 
-public:
     status_t openMmapStreamImpl(bool isOutput,
                                 const audio_attributes_t& attr,
                                 audio_config_base_t* config,

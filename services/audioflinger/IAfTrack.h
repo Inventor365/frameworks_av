@@ -526,7 +526,7 @@ public:
     virtual sp<media::VolumeShaper::State> getVolumeShaperState(int id) const = 0;
     virtual sp<media::VolumeHandler> getVolumeHandler() const = 0;
     /** Set the computed normalized final volume of the track.
-     * !masterMute * !appMuted * masterVolume * streamVolume * averageLRVolume * appVolume */
+     * !masterMute * !appMuted * masterVolume * portVolume * averageLRVolume * appVolume */
     virtual void setFinalVolume(float volumeLeft, float volumeRight) = 0;
     virtual float getFinalVolume() const = 0;
     virtual void getFinalVolume(float* left, float* right) const = 0;

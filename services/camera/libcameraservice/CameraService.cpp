@@ -90,6 +90,14 @@
 #include "utils/TagMonitor.h"
 #include "utils/Utils.h"
 
+#ifdef CAMERA_NEEDS_CLIENT_INFO_LIB
+#include <vendor/oneplus/hardware/camera/1.0/IOnePlusCameraProvider.h>
+#endif
+
+#ifdef CAMERA_NEEDS_CLIENT_INFO_LIB_OPLUS
+#include <vendor/oplus/hardware/cameraMDM/2.0/IOPlusCameraMDM.h>
+#endif
+
 namespace {
     const char* kActivityServiceName = "activity";
     const char* kSensorPrivacyServiceName = "sensor_privacy";
@@ -138,6 +146,12 @@ using hardware::camera2::ICameraInjectionCallback;
 using hardware::camera2::ICameraInjectionSession;
 using hardware::camera2::utils::CameraIdAndSessionConfiguration;
 using hardware::camera2::utils::ConcurrentCameraIdCombination;
+#ifdef CAMERA_NEEDS_CLIENT_INFO_LIB
+using ::vendor::oneplus::hardware::camera::V1_0::IOnePlusCameraProvider;
+#endif
+#ifdef CAMERA_NEEDS_CLIENT_INFO_LIB_OPLUS
+using ::vendor::oplus::hardware::cameraMDM::V2_0::IOPlusCameraMDM;
+#endif
 
 namespace flags = com::android::internal::camera::flags;
 namespace vd_flags = android::companion::virtualdevice::flags;
@@ -173,6 +187,12 @@ static const std::string &sCameraInjectExternalCameraPermission =
 // Constant integer for FGS Logging, used to denote the API type for logger
 static const int LOG_FGS_CAMERA_API = 1;
 const char *sFileName = "lastOpenSessionDumpFile";
+#ifdef CAMERA_NEEDS_CLIENT_INFO_LIB
+static const sp<IOnePlusCameraProvider> gVendorCameraProviderService = IOnePlusCameraProvider::getService();
+#endif
+#ifdef CAMERA_NEEDS_CLIENT_INFO_LIB_OPLUS
+static const sp<IOPlusCameraMDM> gVendorCameraProviderService = IOPlusCameraMDM::getService();
+#endif
 static constexpr int32_t kSystemNativeClientScore = resource_policy::PERCEPTIBLE_APP_ADJ;
 static constexpr int32_t kSystemNativeClientState =
         ActivityManager::PROCESS_STATE_PERSISTENT_UI;
@@ -185,6 +205,9 @@ constexpr int32_t kInvalidDeviceId = -1;
 
 // Set to keep track of logged service error events.
 static std::set<std::string> sServiceErrorEventSet;
+
+// Current camera package name
+static std::string sCurrPackageName;
 
 CameraService::CameraService(
         std::shared_ptr<CameraServiceProxyWrapper> cameraServiceProxyWrapper,
@@ -1520,6 +1543,10 @@ Status CameraService::filterGetInfoErrorCode(status_t err) {
     }
 }
 
+std::string CameraService::getCurrPackageName() {
+    return sCurrPackageName;
+}
+
 Status CameraService::makeClient(
         const sp<CameraService>& cameraService, const sp<IInterface>& cameraCb,
         const AttributionSourceState& clientAttribution, int callingPid, bool systemNativeClient,
@@ -2541,6 +2568,8 @@ Status CameraService::connectHelper(const sp<CALLBACK>& cameraCb, const std::str
 
     const std::string clientPackageName =
             clientAttribution.packageName.value_or(kUnknownPackageName);
+
+    sCurrPackageName = clientPackageName;
 
     {
         // Acquire mServiceLock and prevent other clients from connecting
@@ -3870,7 +3899,8 @@ bool CameraService::evictClientIdByRemote(const wp<IBinder>& remote) {
                 ret = true;
             }
         }
-
+        //clear the evicted client list before acquring service lock again.
+        evicted.clear();
         // Reacquire mServiceLock
         mServiceLock.lock();
 
@@ -4469,6 +4499,10 @@ status_t CameraService::BasicClient::notifyCameraOpening() {
     // Notify listeners of camera open/close status
     sCameraService->updateOpenCloseStatus(mCameraIdStr, true /*open*/, getPackageName(),
             mSharedMode);
+
+#if defined (CAMERA_NEEDS_CLIENT_INFO_LIB) || defined (CAMERA_NEEDS_CLIENT_INFO_LIB_OPLUS)
+    gVendorCameraProviderService->setPackageName(getPackageName().c_str());
+#endif
 
     return OK;
 }

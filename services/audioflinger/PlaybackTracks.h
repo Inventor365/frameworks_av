@@ -387,9 +387,9 @@ private:
         for (auto& tp : mTeePatches) { f(tp.patchTrack); }
     };
 
-    void                populateUsageAndContentTypeFromStreamType();
-
     String8             mPackageName;
+
+    void                populateUsageAndContentTypeFromStreamType();
 
     size_t              mPresentationCompleteFrames = 0; // (Used for Mixed tracks)
                                     // The number of frames written to the
@@ -416,7 +416,7 @@ private:
                                           // volume
     float               mFinalVolumeRight; // combine master volume, stream type volume and track
                                            // volume
-    float               mAppVolume = 1.0f;  // volume control for separate processes
+    float               mAppVolume = 1.0f;
     bool                mAppMuted = false;
     sp<AudioTrackServerProxy>  mAudioTrackServerProxy;
     bool                mResumeToStopping; // track was paused in stopping state.
